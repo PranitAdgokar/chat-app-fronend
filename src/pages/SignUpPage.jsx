@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useAuthStore } from '../store/useAuthStore';
-import { Eye, EyeOff, Key, Loader2, Lock, Mail, MessageSquare, User } from 'lucide-react';
+import AuthImagePattern from '../components/AuthImagePattern';
+import { Eye, EyeOff, Loader2, Lock, Mail, MessageSquare, User } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const SignUpPage = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -12,12 +14,23 @@ const SignUpPage = () => {
   });
 
   const {signup, isSigningUp} = useAuthStore();
-  const validateForm =()=>{
 
+  const validateForm =()=>{
+    if(!formData.firstName.trim())return toast.error("First Name is required");
+    if(!formData.lastName.trim())return toast.error("Last Name is required");
+    if(!formData.email.trim())return toast.error("Email is required");
+    if(!formData.password.trim())return toast.error("Password is required");
+    if(formData.password.trim().length < 6) return toast.error("Password must be at least 6 characters");
+
+    return true;
   }
-  const handleSubmit =(e)=>{
+  const handleSubmit = (e) => {
     e.preventDefault();
-  }
+    const success = validateForm();
+    if(success===true) signup(formData);
+    
+
+  };
 
 
   return (
@@ -148,15 +161,28 @@ const SignUpPage = () => {
                   <Loader2 className="animate-spin size-5" />
                   Loading...
                   </>
-                ): "Create Account"}
+                ): ("Create Account")}
               </button>
 
 
             </form>
+            <div className="text-center">
+              <p className="text-base-content/60">
+                Already have an account?{" "}
+                <a href="/login" className="text-primary">
+                  Login
+                </a>
+              </p>
+            </div>
           
           </div>
         </div>
       </div>
+      {/* right side */}
+      <AuthImagePattern  
+        title="Join Our Community"
+        subtitle="Thousands of people are joining everyday"
+      />
     </div>
   )
 }
