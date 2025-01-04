@@ -14,7 +14,7 @@ const ComingSoon = () => {
   </figure>
   <div className="card-body items-center text-center">
     <h2 className="card-title">
-        Coming Soon...whats
+        Coming Soon...
     </h2>
     <p>
         We are working on something amazing..!!
