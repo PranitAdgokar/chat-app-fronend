@@ -1,5 +1,8 @@
 import { useChatStore } from "../store/useChatStore";
-import { Sidebar } from "../components/Sidebar";
+import Sidebar from "../components/Sidebar.jsx";
+import ChatContainer from "../components/ChatContainer.jsx";
+import NoChatSelected from "../components/NoChatSelected.jsx";
+
 
 
 const HomePage = () => {
@@ -19,3 +22,5 @@ const HomePage = () => {
     </div>
   );
 }
+
+export default HomePage;
