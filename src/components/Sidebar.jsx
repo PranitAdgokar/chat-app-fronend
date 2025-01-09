@@ -1,11 +1,12 @@
 import React, { useEffect } from 'react'
 import { useChatStore } from '../store/useChatStore';
 import SidebarSkeleton from '../components/SidebarSkeleton';
+import { useAuthStore } from '../store/useAuthStore';
 
 const Sidebar = () => {
   const {getUser,users,selectedUser,setSelectedUser, isUsersLoading }=useChatStore();
 
-  const onlineUsers = [];
+  const { onlineUsers } = useAuthStore ();
 
   useEffect(()=>{
     getUser();
@@ -21,6 +22,7 @@ if(isUsersLoading){
     flex flex-col transition-all duration-200">
       <div className="border-b border-base-300 w-full p-5">
         <div className="flex items-center gap-2">
+        
           <span className="font-medium hidden lg:block">Contacts</span>
         </div>
       </div>
