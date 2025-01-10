@@ -42,7 +42,7 @@ export const useChatStore = create((set, get) => ({
       );
       set({ messages: [...messages, res.data] });
     } catch (error) {
-      toast.error("Failed to send message");
+      toast.error("Failed to send message", error);
     }
   },
   setSelectedUser: (selectedUser) => set({ selectedUser }),

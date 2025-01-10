@@ -13,12 +13,44 @@ const ChatInput = () => {
     //    const [isTyping, setIsTyping] = useState(false);
 
     const handleImageChange = (e) => {
-        
+        const file = e.target.files[0];
+        if(!file.type.startsWith("image")){
+            return toast.error("Please select an image file");
+        }
+
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setImagePreview(reader.result);
+        };
+        reader.readAsDataURL(file);
+
     };
 
-    const removeImage = () => {};
+    const removeImage = () => {
+      setImagePreview(null);
+      if(fileInputRef.current){
+        fileInputRef.current.value = "";
+      };
+    };
 
-    const handleSendMessage = async (e) => {};
+    const handleSendMessage = async (e) => {
+      e.preventDefault();
+      if (!text.trim() && !imagePreview) return;
+
+      try {
+        await sendMessage({
+          text: text.trim(),
+          image: imagePreview,
+        });
+  
+        // Clear form
+        setText("");
+        setImagePreview(null);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      } catch (error) {
+        console.error("Failed to send message:", error);
+      }
+    };
 
   return (
 
