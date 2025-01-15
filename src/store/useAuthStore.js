@@ -13,6 +13,8 @@ export const useAuthStore = create((set, get) => ({
   isUpdatingProfile: false,
   onlineUsers: [],
   socket: null,
+  messageStatuses: new Map(), // Track message statuses
+  typingUsers: new Map(), // Track who's typing
 
   checkAuth: async () => {
     try {
@@ -58,7 +60,11 @@ export const useAuthStore = create((set, get) => ({
   logout: async () => {
     try {
       await axiosInstance.post("/auth/logout");
-      set({ authUser: null });
+      set({
+        authUser: null,
+        messageStatuses: new Map(),
+        typingUsers: new Map(),
+      });
       toast.success("Logged out successfully");
       get().disconnectSocket();
     } catch (error) {
@@ -80,6 +86,31 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
+  // Message status management
+  updateMessageStatus: (messageId, status) => {
+    set((state) => ({
+      messageStatuses: new Map(state.messageStatuses).set(messageId, {
+        status,
+        timestamp: new Date(),
+      }),
+    }));
+  },
+
+  getMessageStatus: (messageId) => {
+    return get().messageStatuses.get(messageId)?.status || "sent";
+  },
+
+  // Typing status management
+  setUserTyping: (userId, isTyping) => {
+    set((state) => ({
+      typingUsers: new Map(state.typingUsers).set(userId, isTyping),
+    }));
+  },
+
+  isUserTyping: (userId) => {
+    return get().typingUsers.get(userId) || false;
+  },
+
   connectSocket: () => {
     const { authUser } = get();
     if (!authUser || get().socket?.connected) return;
@@ -87,11 +118,68 @@ export const useAuthStore = create((set, get) => ({
     const socket = io(BASE_URL, {
       query: { userId: authUser._id },
     });
+
     socket.connect();
     set({ socket: socket });
+
+    // Existing socket event
     socket.on("getOnlineUsers", (userIds) => {
       set({ onlineUsers: userIds });
     });
+
+    // New socket events for message status
+    socket.on("messageStatus", ({ messageId, status }) => {
+      get().updateMessageStatus(messageId, status);
+    });
+
+    socket.on("newMessage", (message) => {
+      // Mark message as delivered when received
+      socket.emit("messageRead", {
+        messageId: message._id,
+        senderId: message.sender,
+      });
+      get().updateMessageStatus(message._id, "delivered");
+    });
+
+    // Typing status events
+    socket.on("userTyping", ({ userId }) => {
+      get().setUserTyping(userId, true);
+    });
+
+    socket.on("userStopTyping", ({ userId }) => {
+      get().setUserTyping(userId, false);
+    });
+  },
+
+  // Enhanced message sending with status
+  sendMessage: (messageData) => {
+    const socket = get().socket;
+    if (!socket?.connected) return;
+
+    // Set initial status
+    get().updateMessageStatus(messageData._id, "sent");
+
+    socket.emit("sendMessage", messageData);
+  },
+
+  // Mark message as read
+  markMessageAsRead: (messageId, senderId) => {
+    const socket = get().socket;
+    if (!socket?.connected) return;
+
+    socket.emit("messageRead", {
+      messageId,
+      senderId,
+    });
+    get().updateMessageStatus(messageId, "seen");
+  },
+
+  // Handle typing indicators
+  sendTypingStatus: (receiverId, isTyping) => {
+    const socket = get().socket;
+    if (!socket?.connected) return;
+
+    socket.emit(isTyping ? "typing" : "stopTyping", { receiverId });
   },
 
   disconnectSocket: () => {
