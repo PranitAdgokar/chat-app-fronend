@@ -47,7 +47,7 @@ export const useChatStore = create((set, get) => ({
     }
   },
 
-  sucribeToMessages: () => {
+  subscribeToMessages: () => {
     const { selectedUser } = get();
     if (!selectedUser) return;
     const socket = useAuthStore.getState().socket;
@@ -60,7 +60,7 @@ export const useChatStore = create((set, get) => ({
     });
   },
 
-  unsubcribeToMessages: () => {
+  unsubscribeFromMessages: () => {
     const socket = useAuthStore.getState().socket;
     socket.off("newMessage");
   },

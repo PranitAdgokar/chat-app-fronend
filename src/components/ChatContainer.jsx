@@ -5,62 +5,50 @@ import ChatHeader from './ChatHeader';
 import ChatInput from './ChatInput';
 import MessageSkeleton from './MessageSkeleton';
 import { formatMessageTime } from '../lib/utils';
-import { Check, CheckCheck } from 'lucide-react';
 
-const MessageStatus = ({ messageId }) => {
-  const { getMessageStatus } = useAuthStore();
-  const status = getMessageStatus(messageId);
-
-  return (
-    <span className="inline-flex items-center ml-2">
-      {status === 'sent' && (
-        <Check className="h-4 w-4 text-gray-400" />
-      )}
-      {status === 'delivered' && (
-        <CheckCheck className="h-4 w-4 text-gray-400" />
-      )}
-      {status === 'seen' && (
-        <CheckCheck className="h-4 w-4 text-blue-500" />
-      )}
-    </span>
-  );
-};
-
-const TypingIndicator = () => (
-  <div className="flex space-x-2 p-2">
-    <div className="size-2 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-    <div className="size-2 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.2s]"></div>
-    <div className="size-2 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.1s]"></div>
+// Move TypingIndicator inside ChatContainer to access selectedUser
+const TypingIndicator = ({ selectedUser }) => (
+  <div className="chat chat-start">
+    <div className="chat-image avatar">
+      <div className="size-10 rounded-full border">
+        <img src={selectedUser?.profilePic || "/avatar.png"} alt="profile Pic" />
+      </div>
+    </div>
+    <div className="chat-bubble min-h-8 min-w-12 flex items-center justify-center bg-base-200">
+      <div className="flex items-center space-x-1">
+        <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce [animation-delay:-0.3s]"></div>
+        <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce [animation-delay:-0.2s]"></div>
+        <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce [animation-delay:-0.1s]"></div>
+      </div>
+    </div>
   </div>
 );
 
 const ChatContainer = () => {
-  const { isMessagesLoading, getMessages, messages, selectedUser } = useChatStore();
-  const { authUser, isUserTyping, markMessageAsRead } = useAuthStore();
+  const { isMessagesLoading, getMessages, messages, selectedUser, subscribeToMessages, unsubscribeFromMessages } = useChatStore();
+  const { authUser, isUserTyping } = useAuthStore();
   const messageEndRef = useRef(null);
-  const isTyping = isUserTyping(selectedUser._id);
+  const isTyping = isUserTyping(selectedUser?._id);
 
   useEffect(() => {
-    getMessages(selectedUser._id);
-  }, [selectedUser._id, getMessages]);
+    
+      getMessages(selectedUser._id);
+      subscribeToMessages();
+      return () => unsubscribeFromMessages();
+   
+  }, [selectedUser._id, getMessages, subscribeToMessages, unsubscribeFromMessages]);
 
-  // Mark messages as read when they appear in view
-  useEffect(() => {
-    const markVisibleMessagesAsRead = () => {
-      messages.forEach(message => {
-        if (message.senderId === selectedUser._id) {
-          markMessageAsRead(message._id, message.senderId);
-        }
-      });
-    };
-
-    markVisibleMessagesAsRead();
-  }, [messages, markMessageAsRead, selectedUser._id]);
-
-  // Scroll to bottom when new messages arrive
   useEffect(() => {
     messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, isTyping]);
+
+  if (!selectedUser) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <p className="text-gray-500">Select a user to start chatting</p>
+      </div>
+    );
+  }
 
   if (isMessagesLoading) {
     return (
@@ -93,11 +81,7 @@ const ChatContainer = () => {
                 />
               </div>
             </div>
-            <div className="chat-header mb-1 flex items-center">
-            {message.senderId === authUser._id && (
-                <MessageStatus messageId={message._id} />
-              )}
-
+            <div className="chat-header mb-1">
               <time className="text-xs opacity-50 ml-1">
                 {formatMessageTime(message.createdAt)}
               </time>
@@ -114,16 +98,10 @@ const ChatContainer = () => {
             </div>
           </div>
         ))}
-        
+
         {/* Typing indicator */}
-        {isTyping && (
-          <div className="chat chat-start">
-            <div className="chat-bubble bg-gray-200">
-              <TypingIndicator />
-            </div>
-          </div>
-        )}
-        
+        {isTyping && selectedUser && <TypingIndicator selectedUser={selectedUser} />}
+
         {/* Scroll anchor */}
         <div ref={messageEndRef} />
       </div>

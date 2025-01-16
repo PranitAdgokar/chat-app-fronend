@@ -1,61 +1,94 @@
-import React, { useState } from 'react'
-import { useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useChatStore } from '../store/useChatStore';
+import { useAuthStore } from '../store/useAuthStore';
 import { Send, Image, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 
 const ChatInput = () => {
-    const [text, setText] = useState("");
-    const [imagePreview, setImagePreview] = useState(null);
-    const fileInputRef = useRef(null);
-    const {sendMessage}=useChatStore();
-    //    const [isTyping, setIsTyping] = useState(false);
+  const [text, setText] = useState("");
+  const [imagePreview, setImagePreview] = useState(null);
+  const fileInputRef = useRef(null);
+  const typingTimeoutRef = useRef(null);
+  const { sendMessage, selectedUser } = useChatStore();
+  const { sendTypingStatus } = useAuthStore();
 
-    const handleImageChange = (e) => {
-        const file = e.target.files[0];
-        if(!file.type.startsWith("image")){
-            return toast.error("Please select an image file");
-        }
-
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            setImagePreview(reader.result);
-        };
-        reader.readAsDataURL(file);
-
-    };
-
-    const removeImage = () => {
-      setImagePreview(null);
-      if(fileInputRef.current){
-        fileInputRef.current.value = "";
-      };
-    };
-
-    const handleSendMessage = async (e) => {
-      e.preventDefault();
-      if (!text.trim() && !imagePreview) return;
-
-      try {
-        await sendMessage({
-          text: text.trim(),
-          image: imagePreview,
-        });
-  
-        // Clear form
-        setText("");
-        setImagePreview(null);
-        if (fileInputRef.current) fileInputRef.current.value = "";
-      } catch (error) {
-        console.error("Failed to send message:", error);
+  // Clear typing timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+        sendTypingStatus(selectedUser._id, false);
       }
     };
+  }, [selectedUser._id, sendTypingStatus]);
+
+  const handleTyping = (e) => {
+    const newText = e.target.value;
+    setText(newText);
+
+    // Send typing status
+    sendTypingStatus(selectedUser._id, true);
+
+    // Clear existing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    // Set new timeout to stop typing indication
+    typingTimeoutRef.current = setTimeout(() => {
+      sendTypingStatus(selectedUser._id, false);
+    }, 1000);
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (!file.type.startsWith("image")) {
+      return toast.error("Please select an image file");
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeImage = () => {
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    if (!text.trim() && !imagePreview) return;
+
+    try {
+      // Stop typing indication when sending message
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+        sendTypingStatus(selectedUser._id, false);
+      }
+
+      await sendMessage({
+        text: text.trim(),
+        image: imagePreview,
+      });
+
+      // Clear form
+      setText("");
+      setImagePreview(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    } catch (error) {
+      console.error("Failed to send message:", error);
+    }
+  };
 
   return (
-
-<div className="p-4 w-full">
-{imagePreview && (
+    <div className="p-4 w-full">
+      {imagePreview && (
         <div className="mb-3 flex items-center gap-2">
           <div className="relative">
             <img
@@ -82,7 +115,14 @@ const ChatInput = () => {
             className="w-full input input-bordered rounded-lg input-sm sm:input-md"
             placeholder="Type a message..."
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={handleTyping}
+            onBlur={() => {
+              // Stop typing indication when input loses focus
+              if (typingTimeoutRef.current) {
+                clearTimeout(typingTimeoutRef.current);
+                sendTypingStatus(selectedUser._id, false);
+              }
+            }}
           />
           <input
             type="file"
@@ -113,5 +153,4 @@ const ChatInput = () => {
   );
 };
 
-
-export default ChatInput
+export default ChatInput;

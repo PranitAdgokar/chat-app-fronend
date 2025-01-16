@@ -11,6 +11,7 @@ export const useAuthStore = create((set, get) => ({
   isLoggingnIn: false,
   isSigningUp: false,
   isUpdatingProfile: false,
+  isUserTyping: false,
   onlineUsers: [],
   socket: null,
   messageStatuses: new Map(), // Track message statuses
