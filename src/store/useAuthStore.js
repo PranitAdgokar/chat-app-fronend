@@ -159,8 +159,11 @@ export const useAuthStore = create((set, get) => ({
 
     // Set initial status
     get().updateMessageStatus(messageData._id, "sent");
-
-    socket.emit("sendMessage", messageData);
+    // get the receiver's socket id
+    const receiverId = get().onlineUsers.find(
+      (userId) => userId === messageData.receiver
+    );
+    socket.emit("sendMessage", { ...messageData, receiverId });
   },
 
   // Mark message as read
