@@ -5,7 +5,7 @@ const API_BASE_URL =
 console.log("API Base URL:", API_BASE_URL); // Debugging: Check if URL is correct
 
 export const axiosInstance = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: API_BASE_URL + "/api",
   withCredentials: true,
   headers: {
     "Access-Control-Allow-Origin": "*",
