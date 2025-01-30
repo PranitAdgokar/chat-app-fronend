@@ -53,19 +53,10 @@ export const useChatStore = create((set, get) => ({
       toast.error("Failed to send message", error);
     }
   },
-
-  subscribeToMessages: () => {
-    const { selectedUser } = get();
-    if (!selectedUser) return;
-    const socket = useAuthStore.getState().socket;
-
-    // Subscribe to new messages optimized for performance later
-    socket.on("newMessage", (newMessage) => {
-      console.log("newMessage", newMessage);
-      (set) => ({
-        messages: [...get().messages, newMessage],
-      });
-    });
+  addMessage: (newMessage) => {
+    set((state) => ({
+      messages: [...state.messages, newMessage],
+    }));
   },
 
   unsubscribeFromMessages: () => {

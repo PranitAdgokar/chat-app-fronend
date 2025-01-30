@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { axiosInstance } from "../lib/axios.js";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
-
+import { useChatStore } from "./useChatStore.js";
 const BASE_URL = import.meta.env.VITE_API_URL;
 
 export const useAuthStore = create((set, get) => ({
@@ -115,7 +115,7 @@ export const useAuthStore = create((set, get) => ({
   connectSocket: () => {
     const { authUser } = get();
     if (!authUser || get().socket?.connected) return;
-
+    const addMessage = useChatStore((state) => state.addMessage);
     const socket = io(BASE_URL, {
       query: { userId: authUser._id },
     });
@@ -139,6 +139,7 @@ export const useAuthStore = create((set, get) => ({
         messageId: message._id,
         senderId: message.sender,
       });
+      addMessage(message);
       get().updateMessageStatus(message._id, "delivered");
     });
 

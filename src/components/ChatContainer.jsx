@@ -1,17 +1,20 @@
-import React, { useEffect, useRef } from 'react';
-import { useChatStore } from '../store/useChatStore';
-import { useAuthStore } from '../store/useAuthStore';
-import ChatHeader from './ChatHeader';
-import ChatInput from './ChatInput';
-import MessageSkeleton from './MessageSkeleton';
-import { formatMessageTime } from '../lib/utils';
+import React, { useEffect, useRef } from "react";
+import { useChatStore } from "../store/useChatStore";
+import { useAuthStore } from "../store/useAuthStore";
+import ChatHeader from "./ChatHeader";
+import ChatInput from "./ChatInput";
+import MessageSkeleton from "./MessageSkeleton";
+import { formatMessageTime } from "../lib/utils";
 
 // Move TypingIndicator inside ChatContainer to access selectedUser
 const TypingIndicator = ({ selectedUser }) => (
   <div className="chat chat-start">
     <div className="chat-image avatar">
       <div className="size-10 rounded-full border">
-        <img src={selectedUser?.profilePic || "/avatar.png"} alt="profile Pic" />
+        <img
+          src={selectedUser?.profilePic || "/avatar.png"}
+          alt="profile Pic"
+        />
       </div>
     </div>
     <div className="chat-bubble min-h-8 min-w-12 flex items-center justify-center bg-base-200">
@@ -25,21 +28,25 @@ const TypingIndicator = ({ selectedUser }) => (
 );
 
 const ChatContainer = () => {
-  const { isMessagesLoading, getMessages, messages, selectedUser, subscribeToMessages, unsubscribeFromMessages } = useChatStore();
+  const {
+    isMessagesLoading,
+    getMessages,
+    messages,
+    selectedUser,
+    unsubscribeFromMessages,
+  } = useChatStore();
   const { authUser, isUserTyping } = useAuthStore();
   const messageEndRef = useRef(null);
   const isTyping = isUserTyping(selectedUser?._id);
 
   useEffect(() => {
-    
-      getMessages(selectedUser._id);
-      subscribeToMessages();
-      return () => unsubscribeFromMessages();
-   
-  }, [selectedUser._id, getMessages, subscribeToMessages, unsubscribeFromMessages]);
+    getMessages(selectedUser._id);
+
+    return () => unsubscribeFromMessages();
+  }, [selectedUser._id, getMessages, unsubscribeFromMessages]);
 
   useEffect(() => {
-    messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
 
   if (!selectedUser) {
@@ -67,7 +74,9 @@ const ChatContainer = () => {
         {messages.map((message) => (
           <div
             key={message._id}
-            className={`chat ${message.senderId === authUser._id ? "chat-end" : "chat-start"}`}
+            className={`chat ${
+              message.senderId === authUser._id ? "chat-end" : "chat-start"
+            }`}
           >
             <div className="chat-image avatar">
               <div className="size-10 rounded-full border">
@@ -100,7 +109,9 @@ const ChatContainer = () => {
         ))}
 
         {/* Typing indicator */}
-        {isTyping && selectedUser && <TypingIndicator selectedUser={selectedUser} />}
+        {isTyping && selectedUser && (
+          <TypingIndicator selectedUser={selectedUser} />
+        )}
 
         {/* Scroll anchor */}
         <div ref={messageEndRef} />
