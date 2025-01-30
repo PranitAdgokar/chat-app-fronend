@@ -46,7 +46,7 @@ export const useChatStore = create((set, get) => ({
       console.log("res.data", res.data);
       if (socket?.connected)
         // set initial status
-        socket.emit("sendMessage", { ...res.data, receiverId: userId });
+        socket.emit("sendMessage", { message: res.data, receiverId: userId });
       set({ messages: [...messages, res.data] });
     } catch (error) {
       console.log("Failed to send message", error);
