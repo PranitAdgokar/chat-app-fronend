@@ -152,16 +152,6 @@ export const useAuthStore = create((set, get) => ({
     });
   },
 
-  // Enhanced message sending with status
-  sendMessage: (messageData) => {
-    const socket = get().socket;
-    if (!socket?.connected) return;
-
-    // Set initial status
-    get().updateMessageStatus(messageData._id, "sent");
-    socket.emit("sendMessage", { ...messageData, receiverId: userId });
-  },
-
   // Mark message as read
   markMessageAsRead: (messageId, senderId) => {
     const socket = get().socket;
