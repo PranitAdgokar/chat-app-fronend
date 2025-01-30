@@ -43,7 +43,7 @@ export const useChatStore = create((set, get) => ({
         `/messages/send/${selectedUser._id}`,
         messageData
       );
-      console.log("res.data", res.data);
+
       if (socket?.connected)
         // set initial status
         socket.emit("sendMessage", { message: res.data, receiverId: userId });
@@ -61,6 +61,7 @@ export const useChatStore = create((set, get) => ({
 
     // Subscribe to new messages optimized for performance later
     socket.on("newMessage", (newMessage) => {
+      console.log("newMessage", newMessage);
       (set) => ({
         messages: [...get().messages, newMessage],
       });
